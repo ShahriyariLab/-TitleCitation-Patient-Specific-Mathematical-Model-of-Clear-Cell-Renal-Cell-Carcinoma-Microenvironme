@@ -1,1 +1,3 @@
-# Mathematical-Model-of-clear-cell-Renal-Cell-Carcinoma-ccRCC-in-its-Microenvironment-Based-on-Patie
+# \TitleCitation{Patient-Specific Mathematical Model of Clear Cell Renal Cell Carcinoma Microenvironment
+
+The interactions between cells and molecules in the tumor microenvironment can give insight into the initiation and progression of tumors and their optimal treatment options. In this paper, we develop an Ordinary Differential Equation (ODE) mathematical model of the interaction network of key players in the clear cell Renal Cell Carcinoma (ccRCC) microenvironment. We then perform a global gradient-based sensitivity analysis to investigate the effect of the most sensitive parameters of the model on the number of cancer cells. The results indicate that parameters related to IL-6  have a high impact on cancer cells' growth such that decreasing the level of IL-6 can remarkably slow the tumor's growth.
