@@ -287,12 +287,15 @@ if int(usr_inpt2)==1:
 ################################################################################
 ########################Varying parameters######################################
    
+################################################################################
+########################Varying assumptions######################################
+
 def plot_cancer_vary_assumption_perturb_sensitive_params(assumption_idx, assumption_scale, perturb_scale, T):
    import seaborn as sns
    import matplotlib.pyplot as plt
    from matplotlib.lines import Line2D
 
-   restriction_map =  {14:'deltaDC-deltaD', 32:'lambdaIL6Th-lambdaIL6C', 33:'lambdaIL6D-lambdaIL6D'}
+   restriction_map = {14: 'deltaDC-deltaD', 32: 'lambdaIL6Th-lambdaIL6C', 33: 'lambdaIL6D-lambdaIL6C'}
    perturb_map = {0: 'no perturbation', -perturb_scale: '-'+str(perturb_scale*10)+'%', perturb_scale: '+'+str(perturb_scale*10)+'%'}
    palette = {0:'#3F9B0B', 1:'#FF796C', 2:'#0343DF',3:'#000000'}
    alphas = [0.15, 0.25, 0.15,0.25]
@@ -301,7 +304,7 @@ def plot_cancer_vary_assumption_perturb_sensitive_params(assumption_idx, assumpt
    sns.set(font_scale=1.5)
    sns.set_style("ticks")
    fig, axs = plt.subplots(1, 3, sharey=False, figsize=(17.5,2.5))
-   fig.subplots_adjust(wspace=0.4,hspace=0.5)
+   fig.subplots_adjust(wspace=0.45,hspace=0.5)
    axs = axs.flatten()
    t = np.linspace(0, T, 10*T+1)
    custom_lines = [Line2D([0], [0], color='#3F9B0B', lw=3.5),
@@ -309,18 +312,21 @@ def plot_cancer_vary_assumption_perturb_sensitive_params(assumption_idx, assumpt
                    Line2D([0], [0], color='#0343DF', lw=3.5),
                    Line2D([0], [0], color='#000000', lw=3.5)]
    cancer_vary=pd.DataFrame()
-   for i, newscale in enumerate([1, assumption_scale/25, assumption_scale]):
+   for i, newscale in enumerate([1, 1/assumption_scale, assumption_scale]):
        for cluster in range(4):
            restrictions[assumption_idx] = newscale
            qspcore = Renal_QSP_Functions(SSrestrictions = restrictions)
            new_params = op.fsolve((lambda par,frac: qspcore.SS_system(par,frac)),
                                         np.ones(nparam),args=(clustercells[cluster],))
-           
+           np.savetxt('Data/varying-pars/Cluster'+str(cluster+1)+'-'+restriction_map[assumption_idx]+"-Assumption Scale-"+str(newscale)+'.csv', new_params, delimiter=",")
+           restrictions[assumption_idx] = newscale
+           qspcore = Renal_QSP_Functions(SSrestrictions = restrictions)
+           params = op.fsolve((lambda par,frac: qspcore.SS_system(par,frac)), np.ones(nparam),args=(clustercells[cluster],))
            QSP_ = QSP(new_params)
            u, _ = QSP_.solve_ode(t, IC[cluster], 'given')
            u = clustercells[cluster]*u
            umax = umin = u
-           np.savetxt('Cluster'+str(cluster+1)+"Assumption Scale"+str(newscale)+'vary'+restriction_map[assumption_idx]+'.csv', new_params, delimiter=",")
+           #np.savetxt('Cluster'+str(cluster+1)+restriction_map[assumption_idx]+"Assumption Scale"+str(newscale)+'.csv', new_params, delimiter=",")
            cancer_vary=pd.concat([cancer_vary,pd.DataFrame(u[:,8],columns=['Cluster '+str(cluster+1)+'Scale '+str(newscale)])], axis=1)
            for param_id in sensitive_param_ids:
                for j in [-perturb_scale, perturb_scale]:
@@ -331,28 +337,28 @@ def plot_cancer_vary_assumption_perturb_sensitive_params(assumption_idx, assumpt
                    u_perturb = clustercells[cluster]*u_perturb
                    umax = np.maximum(u_perturb, umax)
                    umin = np.minimum(u_perturb, umin)
-        
+
            axs[i].margins(x=0)
            axs[i].ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
            axs[i].fill_between(t, umax[:,8], umin[:,8], facecolor=palette[cluster], alpha=alphas[cluster])
            axs[i].plot(t, u[:,8], color=palette[cluster])
-       axs[i].set_xlabel('time (days)',fontsize=14)
-       axs[i].set_ylabel('Cancer cells',fontsize=14)
-       axs[i].set_title('Scale='+str(newscale),fontsize=14)
-   if assumption_idx==32:
-       axs[2].legend(custom_lines,['Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4'], bbox_to_anchor=(1.1, 0.5),loc='center left')
-       plt.savefig('fig/varying_Scale'+str(cluster+1)+restriction_map[assumption_idx]+'.eps', format='eps',dpi=300)
-   plt.rc('xtick',labelsize=14)
-   plt.rc('ytick',labelsize=14)
+       axs[i].set_xlabel('time (days)',fontsize=12)
+       axs[i].set_ylabel('Cancer cells',fontsize=12)
+       axs[i].set_title('Scale='+str(newscale),fontsize=12)
+
+       #cancer_vary.to_csv('CancerVaryLambdaCDeltaCScale'+str(newscale)+'.csv')
+   if assumption_idx==33:
+       axs[2].legend(custom_lines,['Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4'], bbox_to_anchor=(1, 0.5,0.5,0.5),loc='center left')
+       #plt.savefig('fig/varying_Scale'+str(cluster+1)+restriction_map[11]+'.eps', format='eps',dpi=300)
    plt.show()
 
-usr_inpt4 = input("Do you want to plot the varying dynamics?(yes=1, no=0)")
-restriction_map = {14:'deltaDC-deltaD', 32:'lambdaIL6Th-lambdaIL6C', 33:'lambdaIL6D-lambdaIL6D'}
+usr_inpt4 = input("Do you want to plot the varying dynamics for assumptions?(yes=1, no=0)")
+restriction_map = {14: 'deltaDC-deltaD', 32: 'lambdaIL6Th-lambdaIL6C', 33: 'lambdaIL6D-lambdaIL6C'}
 keys= [14,32,33]
-sensitive_param_ids = [37,34,38,22,24,19,20,21,15,14,65,62,16]
+sensitive_param_ids = [37,34,38,31,32,22,19,21,20,24,23,54,15,14,16]
 if int(usr_inpt4)==1:
    for i in range(len(keys)):
-       print('Varying', restriction_map[keys[i]], 'assumption + perturb sensitive params by 5%')
+       # print('Varying', restriction_map[keys[i]], 'assumption + perturb sensitive params by 50%')
        plot_cancer_vary_assumption_perturb_sensitive_params(assumption_idx=keys[i], assumption_scale=5, perturb_scale=1, T=5000)
 
 
